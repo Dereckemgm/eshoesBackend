@@ -15,6 +15,11 @@ app.use(express.json());
 app.use('/productos', productoRoutes);
 app.use('/usuarios', usuarioRoutes);
 
+app.get('/', (req, res) => {
+  res.send('¡Hola, mundo desde Node.js!');
+});
+
+
 
 sequelize.sync({ force: false }) // Usa `force: true` para sobrescribir tablas existentes si necesitas
   .then(() => {
