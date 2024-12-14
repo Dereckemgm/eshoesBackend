@@ -20,6 +20,34 @@ const obtenerProductos = async (req, res) => {
     }
   };
 
+  const obtenerProductoPorNombre = async (req, res) => {
+    const { nombre } = req.params;
+  
+    try {
+      const producto = await Productos.findOne({ where: { nombre } });
+  
+      if (!producto) {
+        return res.status(404).json({
+          success: false,
+          message: `Producto con el nombre "${nombre}" no encontrado.`,
+        });
+      }
+  
+      return res.status(200).json({
+        success: true,
+        message: 'Producto encontrado exitosamente.',
+        data: producto,
+      });
+    } catch (error) {
+      console.error('Error al obtener el producto:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error al obtener el producto.',
+      });
+    }
+  };
+  
+
   const crearProducto = async (req, res) => {
   const { nombre, descripcion, precio, stock, imagen_url } = req.body;
 
@@ -53,4 +81,3 @@ const obtenerProductos = async (req, res) => {
   }
 };
 
-module.exports = {obtenerProductos, crearProducto };
