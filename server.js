@@ -4,6 +4,9 @@ const sequelize = require('./src/config/data/db'); // Conexión a la base de dat
 const productoRoutes = require('./src/routes/productoRoutes');  // Rutas de productos
 const usuarioRoutes = require('./src/routes/usuarioRoutes');  // Rutas de usuario
 const ventaRoutes = require('./src/routes/ventaRoutes'); // Importa las rutas de ventas
+const authRoutes = require('./src/routes/authRoutes'); // Importa las rutas de ventas
+const carritoRoutes = require('./src/routes/carritoRoutes'); // Importa las rutas de ventas
+const detallecarritoRoutes = require('./src/routes/detalleCarritoRoutes'); // Importa las rutas de ventas
 const app = express();
 const PORT = process.env.PORT || 3000;
 const serverurl = process.env.URL_RENDER || 'http://localhost';
@@ -16,6 +19,11 @@ app.use(express.json());
 app.use('/productos', productoRoutes);
 app.use('/usuarios', usuarioRoutes);
 app.use('/ventas', ventaRoutes);
+app.use('/auth', authRoutes);
+app.use('/carrito', carritoRoutes);
+app.use('/carritoinfo', detallecarritoRoutes);
+
+
 
 app.get('/', (req, res) => {
   res.send('¡Hola, mundo desde Node.js!');

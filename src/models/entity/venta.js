@@ -1,35 +1,33 @@
+// Venta.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../../config/data/db');
+const Usuario = require('./usuario.js'); // Importa Usuario correctamente
 
-const Ventas = sequelize.define('Ventas', {
-    id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true
+const Venta = sequelize.define('Venta', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  id_usuario: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: Usuario, // Define la relación con el modelo Usuario
+      key: 'id',
     },
-    producto_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false
-    },
-    cantidad: {
-        type: DataTypes.INTEGER,
-        allowNull: false
-    },
-    precio_unitario: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false
-    },
-    total: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false
-    },
-    fecha: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW
-    }
+  },
+  fecha: {
+    type: DataTypes.DATE,
+    defaultValue: sequelize.fn('now'),
+  },
+  total: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+  },
 }, {
-    tableName: 'ventas',
-    timestamps: false
+  tableName: 'ventas',
+  timestamps: false,
 });
 
-module.exports = Ventas;
+module.exports = Venta;

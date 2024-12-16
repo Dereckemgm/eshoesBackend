@@ -1,58 +1,107 @@
-// src/controllers/ventas/ventasController.js
-const Ventas = require('../models/entity/venta.js'); // Importa el modelo
+const Venta = require('../models/entity/venta.js'); // Ajusta la ruta según tu estructura
+const DetalleVenta = require('../models/entity/detalleventa.js');
+const { Carrito, DetalleCarrito, Producto } = require('../models/models.js');  // models.js
 
-// Obtener todas las ventas
-const obtenerVentas = async (req, res) => {
-  try {
-    const ventas = await Ventas.findAll();
-    return res.status(200).json({
-      success: true,
-      message: 'Ventas obtenidas exitosamente.',
-      data: ventas
-    });
-  } catch (error) {
-    console.error('Error al obtener las ventas:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Error al obtener las ventas.'
-    });
-  }
-};
 
-// Crear una nueva venta
-const crearVenta = async (req, res) => {
-  const { producto_id, cantidad, precio_unitario, total, fecha } = req.body;
-
-  // Verificar que los campos requeridos estén presentes
-  if (!producto_id || !cantidad || !precio_unitario || !total) {
-    return res.status(400).json({
-      success: false,
-      message: 'Faltan datos requeridos: producto_id, cantidad, precio_unitario y total.'
-    });
-  }
+async function registrarVenta(req, res) {
+  const userId = req.user.userId; // ID del usuario autenticado extraído del token
 
   try {
-    // Crear la nueva venta
-    const nuevaVenta = await Ventas.create({
-      producto_id,
-      cantidad,
-      precio_unitario,
+    // Buscar el carrito activo del usuario con los detalles y productos
+    const carrito = await Carrito.findOne({
+      where: { id_usuario: userId, estado: 'activo' },
+      include: [
+        {
+          model: DetalleCarrito,
+          as: 'detalles',
+          include: [
+            {
+              model: Producto,
+              as: 'producto',
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!carrito) {
+      return res.status(404).json({ message: 'No se encontró un carrito activo para este usuario.' });
+    }
+
+    // Calcular el total de la venta de forma directa
+    const total = carrito.detalles.reduce((acc, detalle) => 
+      acc + detalle.cantidad * parseFloat(detalle.producto.precio), 0);
+
+    // Crear la venta con el total calculado
+    const venta = await Venta.create({
+      id_usuario: userId,
       total,
-      fecha: fecha || new Date() // Usa la fecha proporcionada o la fecha actual
+    });
+
+    // Registrar los detalles de la venta
+    const detallesVenta = carrito.detalles.map(detalle => ({
+      id_venta: venta.id,
+      id_producto: detalle.id_producto,
+      cantidad: detalle.cantidad,
+      precio_unitario: parseFloat(detalle.producto.precio),
+    }));
+
+    // Crear los detalles de la venta en la base de datos
+    await DetalleVenta.bulkCreate(detallesVenta);
+
+    // Eliminar los productos del carrito (DetalleCarrito) una vez finalizado
+    await DetalleCarrito.destroy({
+      where: { id_carrito: carrito.id },
     });
 
     return res.status(201).json({
-      success: true,
-      message: 'Venta creada exitosamente.',
-      data: nuevaVenta
+      message: 'Venta registrada exitosamente y carrito vaciado.',
+      venta,
+      detallesVenta,
     });
-  } catch (error) {
-    console.error('Error al crear la venta:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Error al crear la venta.'
-    });
+  } catch (err) {
+    console.error('Error al registrar la venta:', err);
+    return res.status(500).json({ error: 'Error al registrar la venta', details: err.message });
   }
-};
+}
 
-module.exports = { obtenerVentas, crearVenta };
+
+async function obtenerVentasUsuario(req, res) {
+  const userId = req.user.userId; // ID del usuario autenticado extraído del token
+
+  try {
+    // Obtener las ventas del usuario con los detalles de cada venta
+    const ventas = await Venta.findAll({
+      where: { id_usuario: userId },
+      include: [
+        {
+          model: DetalleVenta,
+          as: 'detalles',
+          include: [
+            {
+              model: Producto,
+              as: 'producto',
+            },
+          ],
+        },
+      ],
+    });
+
+    if (ventas.length === 0) {
+      return res.status(404).json({ message: 'No se encontraron ventas para este usuario.' });
+    }
+
+    return res.status(200).json({
+      message: 'Ventas obtenidas exitosamente.',
+      ventas,
+    });
+  } catch (err) {
+    console.error('Error al obtener las ventas:', err);
+    return res.status(500).json({ error: 'Error al obtener las ventas', details: err.message });
+  }
+}
+
+module.exports = {
+  registrarVenta,
+  obtenerVentasUsuario
+};

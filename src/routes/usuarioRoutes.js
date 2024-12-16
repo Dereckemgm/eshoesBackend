@@ -1,6 +1,6 @@
 // src/routes/usuarioRoutes.js
 const express = require('express');
-const { obtenerUsuarios, crearUsuario } = require('../controllers/usuarioController.js'); // Importa el controlador
+const { obtenerUsuarios, crearUsuario } = require('../controllers/users/usuarioController.js'); // Importa el controlador
 const router = express.Router();
 
 // Ruta para obtener todos los usuarios

@@ -5,6 +5,6 @@ const router = express.Router();
 
 // Ruta para crear un usuario
 router.post('/crearproducto', crearProducto);
-router.get('/obtenerproductos', obtenerProductos);
+router.get('/', obtenerProductos);
 
 module.exports = router;
